@@ -12,18 +12,23 @@ import {
 } from './signing';
 import {
   ApiResponse,
+  CancelByCloidRequest,
   CancelRequest,
   OrderRequest,
   OrderSpec,
   OrderType,
   Universe,
 } from './types';
+import { DEFAULT_SLIPPAGE, MAINNET_API_URL } from './constants';
+import { five } from './util';
 
 export class Exchange extends API {
   private wallet: Wallet;
   private vaultAddress: string | undefined;
   private meta: Universe;
   private coinToAsset: Record<string, number>;
+  private info: Info;
+  private isMainnet: boolean;
 
   static async create(
     wallet: Wallet,
@@ -42,6 +47,7 @@ export class Exchange extends API {
     vaultAddress: string | undefined = undefined,
   ) {
     super(baseUrl);
+    this.isMainnet = baseUrl === MAINNET_API_URL
     this.wallet = wallet;
     this.vaultAddress = vaultAddress;
 
@@ -52,6 +58,8 @@ export class Exchange extends API {
         (assetInfo) => assetInfo.name === name,
       );
     }
+
+    this.info = new Info(baseUrl, true);
   }
 
   private async _postAction(
@@ -60,6 +68,10 @@ export class Exchange extends API {
           type: 'cancel';
           cancels: { asset: number; oid: number }[];
         }
+      | {
+        type: 'cancelByCloid';
+        cancels: { asset: number; cloid: string }[];
+      }
       | {
           type: 'order';
           grouping;
@@ -82,6 +94,34 @@ export class Exchange extends API {
     return await this.post('/exchange', payload);
   }
 
+  async marketOrder(
+    coin: string,
+    isBuy: boolean,
+    sz: number,
+    reduceOnly = false,
+    slippage = DEFAULT_SLIPPAGE
+  ): Promise<ApiResponse> {
+    const px = await this.slippage_price(coin, isBuy, slippage);
+    return await this.order(coin, isBuy, sz, px, {"limit": {"tif": "Ioc"}}, reduceOnly);
+  }
+
+  private async slippage_price(
+    coin: string,
+    is_buy: boolean,
+    slippage: number,
+    px?: number
+): Promise<number> {
+    if (!px) {
+        const mids = await this.info.allMids()
+        // Get midprice
+        px = parseFloat(mids[coin]);
+    }
+    // Calculate Slippage
+    px *= is_buy ? (1 + slippage) : (1 - slippage);
+    // We round px to 5 significant figures and 6 decimals
+    return five(px);
+}
+
   async order(
     coin: string,
     isBuy: boolean,
@@ -89,6 +129,7 @@ export class Exchange extends API {
     limitPx: number,
     orderType: OrderType,
     reduceOnly = false,
+    cloid ?: string,
   ): Promise<ApiResponse> {
     return await this.bulkOrders([
       {
@@ -98,6 +139,7 @@ export class Exchange extends API {
         limitPx,
         orderType,
         reduceOnly,
+        cloid,
       },
     ]);
   }
@@ -110,22 +152,24 @@ export class Exchange extends API {
         reduceOnly: order.reduceOnly,
         limitPx: order.limitPx,
         sz: order.sz,
+        cloid: order.cloid || undefined,
       },
       orderType: order.orderType,
     }));
 
     const timestamp = getTimestampMs();
     const grouping = 'na';
-
+    const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint6,string)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]'
     const signature = await signL1Action(
       this.wallet,
-      ['(uint32,bool,uint64,uint64,bool,uint8,uint64)[]', 'uint8'],
+      [typeArr, 'uint8'],
       [
         orderSpecs.map((os) => orderSpecPreprocessing(os)),
         orderGroupToNumber(grouping),
       ],
       this.vaultAddress === undefined ? ZERO_ADDRESS : this.vaultAddress,
       timestamp,
+      this.isMainnet
     );
 
     return await this._postAction(
@@ -143,6 +187,10 @@ export class Exchange extends API {
     return this.bulkCancel([{ coin, oid }]);
   }
 
+  async cancelByCloid(coin:string, cloid: string): Promise<any> {
+    return this.bulkCancelByCloid([{ coin, cloid }]);
+  }
+
   async bulkCancel(cancelRequests: CancelRequest[]): Promise<ApiResponse> {
     const timestamp = getTimestampMs();
     const signature = await signL1Action(
@@ -156,6 +204,7 @@ export class Exchange extends API {
       ],
       this.vaultAddress === undefined ? ZERO_ADDRESS : this.vaultAddress,
       timestamp,
+      this.isMainnet
     );
 
     return this._postAction(
@@ -164,6 +213,35 @@ export class Exchange extends API {
         cancels: cancelRequests.map((cancel) => ({
           asset: this.coinToAsset[cancel.coin],
           oid: cancel.oid,
+        })),
+      },
+      signature,
+      timestamp,
+    );
+  }
+
+  async bulkCancelByCloid(cancelRequests: CancelByCloidRequest[]): Promise<ApiResponse> {
+    const timestamp = getTimestampMs();
+    const signature = await signL1Action(
+      this.wallet,
+      ['(uint32,string)[]'],
+      [
+        cancelRequests.map((cancel) => [
+          this.coinToAsset[cancel.coin],
+          cancel.cloid,
+        ]),
+      ],
+      this.vaultAddress === undefined ? ZERO_ADDRESS : this.vaultAddress,
+      timestamp,
+      this.isMainnet
+    );
+
+    return this._postAction(
+      {
+        type: 'cancelByCloid',
+        cancels: cancelRequests.map((cancel) => ({
+          asset: this.coinToAsset[cancel.coin],
+          cloid: cancel.cloid,
         })),
       },
       signature,

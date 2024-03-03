@@ -50,6 +50,7 @@ interface Order {
   limitPx: number;
   sz: number;
   reduceOnly: boolean;
+  cloid?: string;
 }
 
 interface OrderSpec {
@@ -59,10 +60,10 @@ interface OrderSpec {
 
 export function orderSpecPreprocessing(
   order_spec: OrderSpec,
-): [number, boolean, number, number, boolean, number, number] {
+): [number, boolean, number, number, boolean, number, number, string?] {
   const order = order_spec['order'];
   const order_type_array = orderTypeToTuple(order_spec['orderType']);
-  return [
+  const arr: [number, boolean, number, number, boolean, number, number, string?] = [
     order.asset,
     order.isBuy,
     floatToIntForHashing(order.limitPx),
@@ -71,6 +72,10 @@ export function orderSpecPreprocessing(
     order_type_array[0],
     floatToIntForHashing(order_type_array[1]),
   ];
+  if (order.cloid) {
+    arr.push(order.cloid);
+  }
+  return arr;
 }
 
 export interface OrderWire {
@@ -80,6 +85,7 @@ export interface OrderWire {
   sz: string;
   reduceOnly: boolean;
   orderType: OrderTypeWire;
+  cloid?: string;
 }
 
 export function orderTypeToWire(orderType: OrderType): OrderTypeWire {
@@ -106,17 +112,19 @@ export function orderSpecToOrderWire(order_spec: OrderSpec): OrderWire {
     sz: floatToWire(order.sz),
     reduceOnly: order.reduceOnly,
     orderType: orderTypeToWire(order_spec.orderType),
+    cloid: order.cloid,
   };
 }
 
 export function constructPhantomAgent(
   signatureTypes: string[],
   signatureData: any[],
+  isMainnet: boolean,
 ): { source: string; connectionId: string } {
   const coder = new AbiCoder();
   const connectionId = coder.encode(signatureTypes, signatureData);
   return {
-    source: 'a',
+    source: isMainnet ? 'a' : 'b',
     connectionId: keccak256(connectionId),
   };
 }
@@ -127,6 +135,7 @@ export async function signL1Action(
   signatureData: any[],
   activePool: any,
   nonce: any,
+  isMainnet: boolean
 ): Promise<{ r: string; s: string; v: number }> {
   signatureTypes.push('address');
   signatureTypes.push('uint64');
@@ -137,7 +146,7 @@ export async function signL1Action(
   }
   signatureData.push(nonce);
 
-  const phantomAgent = constructPhantomAgent(signatureTypes, signatureData);
+  const phantomAgent = constructPhantomAgent(signatureTypes, signatureData, isMainnet);
 
   return Tl(
     await wallet.signTypedData(
@@ -169,7 +178,7 @@ export async function signUsdTransferAction(
   return Tl(
     await wallet.signTypedData(
       {
-        chainId: 42161,
+        chainId: 421614,
         name: 'Exchange',
         verifyingContract: '0x0000000000000000000000000000000000000000',
         version: '1',

@@ -14,13 +14,26 @@ import {
   VaultDetails,
 } from './types';
 import { WebsocketManager } from './websocketmanager';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
 
 export class API {
   httpAgent: http.Agent;
   httpsAgent: https.Agent;
   constructor(public baseUrl: string) {
-    this.httpAgent = new http.Agent({ keepAlive: true });
-    this.httpsAgent = new https.Agent({ keepAlive: true });
+    const httpProxyUrl = process.env.HTTP_PROXY;
+    const httpsProxyUrl = process.env.HTTPS_PROXY;
+    if (httpProxyUrl) {
+      this.httpAgent = new HttpProxyAgent(httpProxyUrl, { keepAlive: true });
+    } else {
+      this.httpAgent = new http.Agent({ keepAlive: true });
+    }
+    if (httpsProxyUrl) {
+      this.httpsAgent = new HttpsProxyAgent(httpsProxyUrl, { keepAlive: true });
+    } else {
+      this.httpsAgent = new https.Agent({ keepAlive: true });
+    }
+
   }
 
   public async post<T>(urlPath: string, payload = {}): Promise<T> {

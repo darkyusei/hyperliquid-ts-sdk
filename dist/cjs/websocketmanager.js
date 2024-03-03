@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebsocketManager = void 0;
+const ws_1 = require("ws");
 class WebsocketManager {
     subscription_id_counter;
     wsReady;
@@ -8,15 +9,38 @@ class WebsocketManager {
     activeSubscriptions;
     socket;
     debug;
+    alive = false;
     constructor(base_url, debug = false) {
         this.subscription_id_counter = 0;
         this.wsReady = false;
         this.queuedSubscriptions = [];
         this.activeSubscriptions = {};
         const wsUrl = `ws${base_url.slice('http'.length)}/ws`;
-        this.socket = new WebSocket(wsUrl);
         this.debug = debug;
-        this.socket.onopen = () => {
+        this.connectWs(wsUrl, debug);
+    }
+    connectWs(wsUrl, debug) {
+        this.socket = new ws_1.WebSocket(wsUrl);
+        this.debug = debug;
+        this.socket.on('close', (code, reason) => {
+            console.log('WebSocket disconnected', code, reason.toString('utf8'));
+            // if (code === 1006) {
+            //   // 重连
+            //   setTimeout(() => {
+            //     console.log('Reconnecting...');
+            //     this.connectWs(wsUrl, debug);
+            //   }, 5000); // 5秒后重连
+            // } else {
+            //   console.log("waiting")
+            // }
+        });
+        this.socket.on('error', (error) => {
+            console.error('WebSocket error:', error);
+            // this.socket.close()
+        });
+        this.socket.on('open', () => {
+            this.alive = true;
+            this.heartbeat();
             if (this.debug) {
                 console.log('on_open');
             }
@@ -25,7 +49,7 @@ class WebsocketManager {
                 .queuedSubscriptions) {
                 this.subscribe(subscription, active_subscription.callback, active_subscription.subscriptionId);
             }
-        };
+        });
         this.socket.onmessage = (event) => {
             const message = event.data;
             if (message === 'Websocket connection established.') {
@@ -42,6 +66,9 @@ class WebsocketManager {
                 }
                 return;
             }
+            if (identifier === 'pong') {
+                this.alive = true;
+            }
             const active_subscriptions = this.activeSubscriptions[identifier];
             if (!active_subscriptions || active_subscriptions.length === 0) {
                 if (this.debug) {
@@ -54,6 +81,11 @@ class WebsocketManager {
                 }
             }
         };
+    }
+    heartbeat() {
+        setInterval(() => {
+            this.socket.send(JSON.stringify({ method: 'ping' }));
+        }, 30000);
     }
     subscribe(subscription, callback, subscription_id) {
         const subscriptionId = subscription_id || ++this.subscription_id_counter;
@@ -101,6 +133,9 @@ class WebsocketManager {
         return new_active_subscriptions.length !== active_subscriptions.length;
     }
     subscriptionToIdentifier(subscription) {
+        if (subscription.type === 'l2Book') {
+            return `l2Book:${subscription.coin.toLowerCase()}`;
+        }
         return subscription.type;
     }
     wsMsgToIdentifier(wsMsg) {
@@ -124,6 +159,9 @@ class WebsocketManager {
         }
         else if (wsMsg['channel'] === 'subscriptionResponse') {
             return 'subscriptionResponse';
+        }
+        else if (wsMsg['channel'] === 'pong') {
+            return 'pong';
         }
         return wsMsg['channel'];
     }

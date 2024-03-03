@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { Exchange, Info, MAINNET_API_URL } from '../src';
+import { Exchange, Info, MAINNET_API_URL, TESTNET_API_URL } from '../src';
 
 const secretKey: string = process.env.SECRET_KEY || '';
 
@@ -52,34 +52,41 @@ async function doexchange(info, exchange, wallet) {
   const address = wallet.address;
 
   const oos = await info.openOrders(address);
+  console.log(oos);
   const cancelRequests = oos.map((oo) => {
     return { coin: oo.coin, oid: oo.oid };
   });
   console.log(await exchange.bulkCancel(cancelRequests));
 
-  console.log(
-    await exchange.bulkOrders([
-      {
-        coin: 'XRP',
-        isBuy: true,
-        sz: 1,
-        limitPx: 1,
-        orderType: { limit: { tif: 'Alo' } },
-        reduceOnly: true,
-      },
-    ]),
-  );
+  // console.log(
+  //   await exchange.bulkOrders([
+  //     {
+  //       coin: 'XRP',
+  //       isBuy: true,
+  //       sz: 1,
+  //       limitPx: 1,
+  //       orderType: { limit: { tif: 'Alo' } },
+  //       reduceOnly: true,
+  //     },
+  //   ]),
+  // );
 }
 
 async function main(): Promise<void> {
-  const info = new Info(MAINNET_API_URL);
+  const info = new Info(TESTNET_API_URL);
   const wallet = new ethers.Wallet(secretKey);
-  const exchange = await Exchange.create(wallet, MAINNET_API_URL);
+  const exchange = await Exchange.create(wallet, TESTNET_API_URL);
 
   try {
     // await dohttp(info, wallet);
     // await dows(info, wallet);
-    await doexchange(info, exchange, wallet);
+    const res = await exchange.order('ARB', false, 10, 2, {
+      limit: { tif: 'Gtc' },
+    },
+    false,
+    '0x1234567890abcdef1234567890abcdef',);
+    console.log(res)
+    // await doexchange(info, exchange, wallet);
   } catch (error) {
     console.log(error);
   }

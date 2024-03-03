@@ -54,7 +54,7 @@ exports.orderGroupToNumber = orderGroupToNumber;
 function orderSpecPreprocessing(order_spec) {
     const order = order_spec['order'];
     const order_type_array = orderTypeToTuple(order_spec['orderType']);
-    return [
+    const arr = [
         order.asset,
         order.isBuy,
         floatToIntForHashing(order.limitPx),
@@ -63,6 +63,10 @@ function orderSpecPreprocessing(order_spec) {
         order_type_array[0],
         floatToIntForHashing(order_type_array[1]),
     ];
+    if (order.cloid) {
+        arr.push(order.cloid);
+    }
+    return arr;
 }
 exports.orderSpecPreprocessing = orderSpecPreprocessing;
 function orderTypeToWire(orderType) {
@@ -90,19 +94,20 @@ function orderSpecToOrderWire(order_spec) {
         sz: floatToWire(order.sz),
         reduceOnly: order.reduceOnly,
         orderType: orderTypeToWire(order_spec.orderType),
+        cloid: order.cloid,
     };
 }
 exports.orderSpecToOrderWire = orderSpecToOrderWire;
-function constructPhantomAgent(signatureTypes, signatureData) {
+function constructPhantomAgent(signatureTypes, signatureData, isMainnet) {
     const coder = new ethers_1.AbiCoder();
     const connectionId = coder.encode(signatureTypes, signatureData);
     return {
-        source: 'a',
+        source: isMainnet ? 'a' : 'b',
         connectionId: (0, ethers_1.keccak256)(connectionId),
     };
 }
 exports.constructPhantomAgent = constructPhantomAgent;
-async function signL1Action(wallet, signatureTypes, signatureData, activePool, nonce) {
+async function signL1Action(wallet, signatureTypes, signatureData, activePool, nonce, isMainnet) {
     signatureTypes.push('address');
     signatureTypes.push('uint64');
     if (activePool === null) {
@@ -112,7 +117,7 @@ async function signL1Action(wallet, signatureTypes, signatureData, activePool, n
         signatureData.push(activePool);
     }
     signatureData.push(nonce);
-    const phantomAgent = constructPhantomAgent(signatureTypes, signatureData);
+    const phantomAgent = constructPhantomAgent(signatureTypes, signatureData, isMainnet);
     return Tl(await wallet.signTypedData({
         chainId: 1337,
         name: 'Exchange',
@@ -128,7 +133,7 @@ async function signL1Action(wallet, signatureTypes, signatureData, activePool, n
 exports.signL1Action = signL1Action;
 async function signUsdTransferAction(wallet, message) {
     return Tl(await wallet.signTypedData({
-        chainId: 42161,
+        chainId: 421614,
         name: 'Exchange',
         verifyingContract: '0x0000000000000000000000000000000000000000',
         version: '1',

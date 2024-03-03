@@ -10,12 +10,13 @@ interface Order {
     limitPx: number;
     sz: number;
     reduceOnly: boolean;
+    cloid?: string;
 }
 interface OrderSpec {
     order: Order;
     orderType: OrderType;
 }
-export declare function orderSpecPreprocessing(order_spec: OrderSpec): [number, boolean, number, number, boolean, number, number];
+export declare function orderSpecPreprocessing(order_spec: OrderSpec): [number, boolean, number, number, boolean, number, number, string?];
 export interface OrderWire {
     asset: number;
     isBuy: boolean;
@@ -23,14 +24,15 @@ export interface OrderWire {
     sz: string;
     reduceOnly: boolean;
     orderType: OrderTypeWire;
+    cloid?: string;
 }
 export declare function orderTypeToWire(orderType: OrderType): OrderTypeWire;
 export declare function orderSpecToOrderWire(order_spec: OrderSpec): OrderWire;
-export declare function constructPhantomAgent(signatureTypes: string[], signatureData: any[]): {
+export declare function constructPhantomAgent(signatureTypes: string[], signatureData: any[], isMainnet: boolean): {
     source: string;
     connectionId: string;
 };
-export declare function signL1Action(wallet: Wallet, signatureTypes: string[], signatureData: any[], activePool: any, nonce: any): Promise<{
+export declare function signL1Action(wallet: Wallet, signatureTypes: string[], signatureData: any[], activePool: any, nonce: any, isMainnet: boolean): Promise<{
     r: string;
     s: string;
     v: number;
