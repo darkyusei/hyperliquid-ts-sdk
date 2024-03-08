@@ -1,6 +1,6 @@
 {
   "name": "hyperliquid-ts-sdk",
-  "version": "0.0.31",
+  "version": "0.0.34",
   "description": "Typescript SDK for Hyperliquid",
   "repository": "https://github.com/elevatordown/hyperliquid-ts-sdk",
   "author": {

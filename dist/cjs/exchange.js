@@ -80,7 +80,8 @@ class Exchange extends api_1.API {
         }));
         const timestamp = (0, signing_1.getTimestampMs)();
         const grouping = 'na';
-        const signature = await (0, signing_1.signL1Action)(this.wallet, ['(uint32,bool,uint64,uint64,bool,uint8,uint64,byte)[]', 'uint8'], [
+        const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint64,bytes16)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]';
+        const signature = await (0, signing_1.signL1Action)(this.wallet, [typeArr, 'uint8'], [
             orderSpecs.map((os) => (0, signing_1.orderSpecPreprocessing)(os)),
             (0, signing_1.orderGroupToNumber)(grouping),
         ], this.vaultAddress === undefined ? signing_1.ZERO_ADDRESS : this.vaultAddress, timestamp, this.isMainnet);

@@ -159,7 +159,7 @@ export class Exchange extends API {
 
     const timestamp = getTimestampMs();
     const grouping = 'na';
-    const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint6,string)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]'
+    const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint64,bytes16)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]'
     const signature = await signL1Action(
       this.wallet,
       [typeArr, 'uint8'],

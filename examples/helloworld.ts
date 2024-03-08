@@ -84,7 +84,7 @@ async function main(): Promise<void> {
       limit: { tif: 'Gtc' },
     },
     false,
-    '0x1234567890abcdef1234567890abcdef',);
+    "0x7a39d87db4994fdf942c7c1fa458438a",);
     console.log(res)
     // await doexchange(info, exchange, wallet);
   } catch (error) {
