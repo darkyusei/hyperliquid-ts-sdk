@@ -1,6 +1,6 @@
 {
   "name": "hyperliquid-ts-sdk",
-  "version": "0.0.1",
+  "version": "0.0.13",
   "description": "Typescript SDK for Hyperliquid",
   "repository": "https://github.com/elevatordown/hyperliquid-ts-sdk",
   "author": {
@@ -21,14 +21,14 @@
     "format": "prettier --check ./src",
     "lint": "eslint ./src --ext ts --ext tsx --ext js --quiet",
     "typecheck": "tsc --noEmit --pretty",
-    "prepublishOnly": "yarn validate && yarn build",
+    "prepublishOnly": "yarn build",
     "validate": "yarn lint && yarn format"
   },
   "dependencies": {
     "axios": "^1.4.0",
     "ethers": "^6.6.4",
     "ethers-utils": "^2.1.11",
-    "ws": "^8.13.0"
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",

@@ -1,4 +1,5 @@
 import { Subscription, WsMsg } from './types';
+import { WebSocket } from 'ws';
 type ActiveSubscription = {
     callback: (data: any) => void;
     subscriptionId: number;
@@ -16,9 +17,12 @@ export declare class WebsocketManager {
     wsReady: boolean;
     queuedSubscriptions: [Subscription, ActiveSubscription][];
     activeSubscriptions: Record<string, ActiveSubscription[]>;
-    socket: WebSocketType;
+    socket: WebSocket;
     debug: boolean;
+    alive: boolean;
     constructor(base_url: string, debug?: boolean);
+    connectWs(wsUrl: string, debug: boolean): void;
+    heartbeat(): void;
     subscribe(subscription: any, callback: (wsMsg: WsMsg) => void, subscription_id?: number): number;
     unsubscribe(subscription: Subscription, subscription_id: number): boolean;
     private subscriptionToIdentifier;

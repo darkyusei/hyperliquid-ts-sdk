@@ -1,4 +1,5 @@
 import { Subscription, WsMsg } from './types';
+import {WebSocket} from 'ws';
 
 type ActiveSubscription = {
   callback: (data: any) => void;
@@ -19,8 +20,9 @@ export class WebsocketManager {
   wsReady: boolean;
   queuedSubscriptions: [Subscription, ActiveSubscription][];
   activeSubscriptions: Record<string, ActiveSubscription[]>;
-  socket: WebSocketType;
+  socket: WebSocket;
   debug: boolean;
+  alive: boolean = false;
 
   constructor(base_url: string, debug = false) {
     this.subscription_id_counter = 0;
@@ -29,11 +31,40 @@ export class WebsocketManager {
     this.activeSubscriptions = {};
 
     const wsUrl = `ws${base_url.slice('http'.length)}/ws`;
+
+    this.debug = debug;
+
+    this.connectWs(wsUrl, debug);
+
+  }
+  
+  connectWs(wsUrl: string, debug: boolean) {
     this.socket = new WebSocket(wsUrl) as WebSocketType;
 
     this.debug = debug;
 
-    this.socket.onopen = (): void => {
+    this.socket.on('close', (code: number, reason: Buffer) => {
+        console.log('WebSocket disconnected', code, reason.toString('utf8'));
+        // if (code === 1006) {
+        //   // 重连
+        //   setTimeout(() => {
+        //     console.log('Reconnecting...');
+        //     this.connectWs(wsUrl, debug);
+        //   }, 5000); // 5秒后重连
+        // } else {
+        //   console.log("waiting")
+        // }
+        
+    });
+
+    this.socket.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      // this.socket.close()
+    })
+
+    this.socket.on('open', (): void => {
+      this.alive = true
+      this.heartbeat()
       if (this.debug) {
         console.log('on_open');
       }
@@ -46,7 +77,7 @@ export class WebsocketManager {
           active_subscription.subscriptionId,
         );
       }
-    };
+    });
 
     this.socket.onmessage = (event: MessageEvent): void => {
       const message = event.data;
@@ -66,6 +97,10 @@ export class WebsocketManager {
         return;
       }
 
+      if (identifier === 'pong') {
+        this.alive = true
+      }
+
       const active_subscriptions = this.activeSubscriptions[identifier];
       if (!active_subscriptions || active_subscriptions.length === 0) {
         if (this.debug) {
@@ -81,6 +116,14 @@ export class WebsocketManager {
         }
       }
     };
+
+
+  }
+
+  heartbeat() {
+    setInterval(()=> {
+      this.socket.send(JSON.stringify({ method: 'ping' }))
+    }, 30000)
   }
 
   subscribe(
@@ -138,6 +181,9 @@ export class WebsocketManager {
   }
 
   private subscriptionToIdentifier(subscription: Subscription): string {
+    if (subscription.type === 'l2Book') {
+      return `l2Book:${subscription.coin.toLowerCase()}`;
+    }
     return subscription.type;
   }
 
@@ -157,6 +203,8 @@ export class WebsocketManager {
       return 'userEvents';
     } else if (wsMsg['channel'] === 'subscriptionResponse') {
       return 'subscriptionResponse';
+    } else if (wsMsg['channel'] === 'pong') {
+      return 'pong'
     }
     return wsMsg['channel'];
   }
