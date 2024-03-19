@@ -49,7 +49,7 @@ export function orderGroupToNumber(grouping) {
 export function orderSpecPreprocessing(order_spec) {
     const order = order_spec['order'];
     const order_type_array = orderTypeToTuple(order_spec['orderType']);
-    return [
+    const arr = [
         order.asset,
         order.isBuy,
         floatToIntForHashing(order.limitPx),
@@ -58,6 +58,10 @@ export function orderSpecPreprocessing(order_spec) {
         order_type_array[0],
         floatToIntForHashing(order_type_array[1]),
     ];
+    if (order.cloid) {
+        arr.push(order.cloid);
+    }
+    return arr;
 }
 export function orderTypeToWire(orderType) {
     if (orderType.limit) {
@@ -83,17 +87,18 @@ export function orderSpecToOrderWire(order_spec) {
         sz: floatToWire(order.sz),
         reduceOnly: order.reduceOnly,
         orderType: orderTypeToWire(order_spec.orderType),
+        cloid: order.cloid,
     };
 }
-export function constructPhantomAgent(signatureTypes, signatureData) {
+export function constructPhantomAgent(signatureTypes, signatureData, isMainnet) {
     const coder = new AbiCoder();
     const connectionId = coder.encode(signatureTypes, signatureData);
     return {
-        source: 'a',
+        source: isMainnet ? 'a' : 'b',
         connectionId: keccak256(connectionId),
     };
 }
-export async function signL1Action(wallet, signatureTypes, signatureData, activePool, nonce) {
+export async function signL1Action(wallet, signatureTypes, signatureData, activePool, nonce, isMainnet) {
     signatureTypes.push('address');
     signatureTypes.push('uint64');
     if (activePool === null) {
@@ -103,7 +108,7 @@ export async function signL1Action(wallet, signatureTypes, signatureData, active
         signatureData.push(activePool);
     }
     signatureData.push(nonce);
-    const phantomAgent = constructPhantomAgent(signatureTypes, signatureData);
+    const phantomAgent = constructPhantomAgent(signatureTypes, signatureData, isMainnet);
     return Tl(await wallet.signTypedData({
         chainId: 1337,
         name: 'Exchange',
@@ -118,7 +123,7 @@ export async function signL1Action(wallet, signatureTypes, signatureData, active
 }
 export async function signUsdTransferAction(wallet, message) {
     return Tl(await wallet.signTypedData({
-        chainId: 42161,
+        chainId: 421614,
         name: 'Exchange',
         verifyingContract: '0x0000000000000000000000000000000000000000',
         version: '1',

@@ -21,6 +21,7 @@ export class WebsocketManager {
         this.debug = debug;
         this.socket.on('close', (code, reason) => {
             console.log('WebSocket disconnected', code, reason.toString('utf8'));
+<<<<<<< HEAD
             if (code === 1006) {
                 // 重连
                 setTimeout(() => {
@@ -31,6 +32,17 @@ export class WebsocketManager {
             else {
                 console.log("waiting");
             }
+=======
+            // if (code === 1006) {
+            //   // 重连
+            //   setTimeout(() => {
+            //     console.log('Reconnecting...');
+            //     this.connectWs(wsUrl, debug);
+            //   }, 5000); // 5秒后重连
+            // } else {
+            //   console.log("waiting")
+            // }
+>>>>>>> f8a23103e941f6c23f1c81cc133e8ac9e32797fd
         });
         this.socket.on('error', (error) => {
             console.error('WebSocket error:', error);

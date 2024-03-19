@@ -8,14 +8,28 @@ const axios_1 = __importDefault(require("axios"));
 const http_1 = __importDefault(require("http"));
 const https_1 = __importDefault(require("https"));
 const websocketmanager_1 = require("./websocketmanager");
+const https_proxy_agent_1 = require("https-proxy-agent");
+const http_proxy_agent_1 = require("http-proxy-agent");
 class API {
     baseUrl;
     httpAgent;
     httpsAgent;
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
-        this.httpAgent = new http_1.default.Agent({ keepAlive: true });
-        this.httpsAgent = new https_1.default.Agent({ keepAlive: true });
+        const httpProxyUrl = process.env.HTTP_PROXY;
+        const httpsProxyUrl = process.env.HTTPS_PROXY;
+        if (httpProxyUrl) {
+            this.httpAgent = new http_proxy_agent_1.HttpProxyAgent(httpProxyUrl, { keepAlive: true });
+        }
+        else {
+            this.httpAgent = new http_1.default.Agent({ keepAlive: true });
+        }
+        if (httpsProxyUrl) {
+            this.httpsAgent = new https_proxy_agent_1.HttpsProxyAgent(httpsProxyUrl, { keepAlive: true });
+        }
+        else {
+            this.httpsAgent = new https_1.default.Agent({ keepAlive: true });
+        }
     }
     async post(urlPath, payload = {}) {
         try {

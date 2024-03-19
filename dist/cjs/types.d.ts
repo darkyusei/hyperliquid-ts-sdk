@@ -172,10 +172,15 @@ export interface OrderRequest {
     limitPx: number;
     orderType: OrderType;
     reduceOnly: boolean;
+    cloid?: string;
 }
 export interface CancelRequest {
     coin: string;
     oid: number;
+}
+export interface CancelByCloidRequest {
+    coin: string;
+    cloid: string;
 }
 export interface Order {
     asset: number;

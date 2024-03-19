@@ -1,6 +1,6 @@
 {
   "name": "hyperliquid-ts-sdk",
-  "version": "0.0.13",
+  "version": "0.0.34",
   "description": "Typescript SDK for Hyperliquid",
   "repository": "https://github.com/elevatordown/hyperliquid-ts-sdk",
   "author": {
@@ -28,6 +28,9 @@
     "axios": "^1.4.0",
     "ethers": "^6.6.4",
     "ethers-utils": "^2.1.11",
+    "http-proxy-agent": "^7.0.0",
+    "https-proxy-agent": "^7.0.2",
+    "rimraf": "^5.0.5",
     "ws": "^8.16.0"
   },
   "devDependencies": {
