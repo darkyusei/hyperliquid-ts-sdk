@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { Exchange, Info, MAINNET_API_URL, TESTNET_API_URL } from '../src';
+import { Exchange, Info, MAINNET_API_URL, MAINNET_UI_API_URL, TESTNET_API_URL, TESTNET_UI_API_URL } from '../src';
 
 const secretKey: string = process.env.SECRET_KEY || '';
 
@@ -73,20 +73,24 @@ async function doexchange(info, exchange, wallet) {
 }
 
 async function main(): Promise<void> {
-  const info = new Info(TESTNET_API_URL);
-  const wallet = new ethers.Wallet(secretKey);
-  const exchange = await Exchange.create(wallet, TESTNET_API_URL);
-
+  const wallet = new ethers.Wallet("0xb86bca5ba4e66624d910027bfb7d5654f4bd5b1159be5b2bb416fb1a66e3df6f");
+  const exchange = await Exchange.create(wallet, TESTNET_UI_API_URL);
+  let orderId = 0
   try {
-    // await dohttp(info, wallet);
-    // await dows(info, wallet);
-    const res = await exchange.order('ARB', false, 10, 2, {
+    const res = await exchange.UIorder('ARB', false, 10, 2, {
       limit: { tif: 'Gtc' },
     },
-    false,
-    "0x7a39d87db4994fdf942c7c1fa458438a",);
+    false);
     console.log(res)
+    orderId = (res.response.data.statuses[0] as any).resting.oid
     // await doexchange(info, exchange, wallet);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const res = await exchange.UIcancel("ARB", orderId)
+    console.log(res)
   } catch (error) {
     console.log(error);
   }
