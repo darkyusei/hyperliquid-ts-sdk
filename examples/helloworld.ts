@@ -73,7 +73,7 @@ async function doexchange(info, exchange, wallet) {
 }
 
 async function main(): Promise<void> {
-  const wallet = new ethers.Wallet("0xb86bca5ba4e66624d910027bfb7d5654f4bd5b1159be5b2bb416fb1a66e3df6f");
+  const wallet = new ethers.Wallet("");
   const exchange = await Exchange.create(wallet, TESTNET_UI_API_URL);
   let orderId = 0
   try {
