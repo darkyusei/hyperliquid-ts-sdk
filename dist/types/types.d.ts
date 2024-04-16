@@ -193,6 +193,17 @@ export interface OrderSpec {
     order: Order;
     orderType: OrderType;
 }
+export interface UIOrder {
+    a: number;
+    b: boolean;
+    p: number;
+    s: number;
+    r: boolean;
+}
+export interface UIOrderSpec {
+    order: UIOrder;
+    orderType: OrderType;
+}
 type ResponseStatus = 'success' | {
     error: string;
 };

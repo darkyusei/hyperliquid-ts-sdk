@@ -25,12 +25,12 @@ export class API {
             this.httpsAgent = new https.Agent({ keepAlive: true });
         }
     }
-    async post(urlPath, payload = {}) {
+    async post(urlPath, payload = {}, config = {}) {
         try {
-            const response = await axios.post(this.baseUrl + urlPath, payload, {
+            const response = await axios.post(this.baseUrl + urlPath, payload, Object.assign(config, {
                 httpAgent: this.httpAgent,
                 httpsAgent: this.httpsAgent,
-            });
+            }));
             return response.data;
         }
         catch (error) {

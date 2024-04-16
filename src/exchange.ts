@@ -2,11 +2,13 @@ import { Wallet } from 'ethers';
 import { API, Info } from './api';
 import {
   OrderWire,
+  UIOrderWire,
   ZERO_ADDRESS,
   getTimestampMs,
   orderGroupToNumber,
   orderSpecPreprocessing,
   orderSpecToOrderWire,
+  orderSpecToUIOrderWire,
   signL1Action,
   signUsdTransferAction,
 } from './signing';
@@ -19,7 +21,7 @@ import {
   OrderType,
   Universe,
 } from './types';
-import { DEFAULT_SLIPPAGE, MAINNET_API_URL } from './constants';
+import { DEFAULT_SLIPPAGE, MAINNET_API_URL, MAINNET_UI_API_URL } from './constants';
 import { five } from './util';
 
 export class Exchange extends API {
@@ -47,7 +49,7 @@ export class Exchange extends API {
     vaultAddress: string | undefined = undefined,
   ) {
     super(baseUrl);
-    this.isMainnet = baseUrl === MAINNET_API_URL
+    this.isMainnet = baseUrl === MAINNET_API_URL || baseUrl === MAINNET_UI_API_URL;
     this.wallet = wallet;
     this.vaultAddress = vaultAddress;
 
@@ -92,6 +94,58 @@ export class Exchange extends API {
       vaultAddress: this.vaultAddress,
     };
     return await this.post('/exchange', payload);
+  }
+
+  private async _postUIAction(
+    action:
+      | {
+          type: 'cancel';
+          cancels: { a: number; o: number }[];
+        }
+      | {
+        type: 'cancelByCloid';
+        cancels: { a: number; o: string }[];
+      }
+      | {
+        type: 'order';
+        grouping;
+        orders: UIOrderWire[];
+      }
+      | {
+          type: 'usdTransfer';
+          chain;
+          payload;
+        },
+    signature: { r: string; s: string; v: number },
+    nonce: number,
+  ): Promise<ApiResponse> {
+    const payload = {
+      action,
+      nonce,
+      signature,
+      vaultAddress: this.vaultAddress,
+      isFrontend: true,
+    };
+    return await this.post('/exchange', payload, {
+      headers: {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+       "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6,ha;q=0.5,su;q=0.4,id;q=0.3",
+        "Cache-Control": "no-cache",
+        "Content-Type": "application/json",
+        "Dnt": 1,
+        "Origin": "https://app.hyperliquid.xyz",
+        "Pragma": "no-cache",
+        "Referer": "https://app.hyperliquid.xyz/",
+        "Sec-Ch-Ua": `"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"`,
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "macOS",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+      }
+    });
   }
 
   async marketOrder(
@@ -144,6 +198,26 @@ export class Exchange extends API {
     ]);
   }
 
+  async UIorder(
+    coin: string,
+    isBuy: boolean,
+    sz: number,
+    limitPx: number,
+    orderType: OrderType,
+    reduceOnly = false,
+  ): Promise<ApiResponse> {
+    return await this.bulkUIOrders([
+      {
+        coin,
+        isBuy,
+        sz,
+        limitPx,
+        orderType,
+        reduceOnly,
+      },
+    ]);
+  }
+
   async bulkOrders(orderRequests: OrderRequest[]): Promise<ApiResponse> {
     const orderSpecs: OrderSpec[] = orderRequests.map((order) => ({
       order: {
@@ -183,7 +257,49 @@ export class Exchange extends API {
     );
   }
 
+  async bulkUIOrders(orderRequests: OrderRequest[]): Promise<ApiResponse> {
+    const orderSpecs: OrderSpec[] = orderRequests.map((order) => ({
+      order: {
+        asset: this.coinToAsset[order.coin],
+        isBuy: order.isBuy,
+        reduceOnly: order.reduceOnly,
+        limitPx: order.limitPx,
+        sz: order.sz,
+      },
+      orderType: order.orderType,
+    }));
+
+    const timestamp = getTimestampMs();
+    const grouping = 'na';
+    const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint64,bytes16)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]';
+    const signature = await signL1Action(
+      this.wallet,
+      [typeArr, 'uint8'],
+      [
+        orderSpecs.map((os) => orderSpecPreprocessing(os)),
+        orderGroupToNumber(grouping),
+      ],
+      this.vaultAddress === undefined ? ZERO_ADDRESS : this.vaultAddress,
+      timestamp,
+      this.isMainnet
+    );
+
+    return await this._postUIAction(
+      {
+        type: 'order',
+        grouping,
+        orders: orderSpecs.map(orderSpecToUIOrderWire),
+      },
+      signature,
+      timestamp,
+    );
+  }
+
   async cancel(coin: string, oid: number): Promise<any> {
+    return this.bulkCancel([{ coin, oid }]);
+  }
+
+  async UIcancel(coin: string, oid: number): Promise<any> {
     return this.bulkCancel([{ coin, oid }]);
   }
 
@@ -213,6 +329,35 @@ export class Exchange extends API {
         cancels: cancelRequests.map((cancel) => ({
           asset: this.coinToAsset[cancel.coin],
           oid: cancel.oid,
+        })),
+      },
+      signature,
+      timestamp,
+    );
+  }
+
+  async bulkUICancel(cancelRequests: CancelRequest[]): Promise<ApiResponse> {
+    const timestamp = getTimestampMs();
+    const signature = await signL1Action(
+      this.wallet,
+      ['(uint32,uint64)[]'],
+      [
+        cancelRequests.map((cancel) => [
+          this.coinToAsset[cancel.coin],
+          cancel.oid,
+        ]),
+      ],
+      this.vaultAddress === undefined ? ZERO_ADDRESS : this.vaultAddress,
+      timestamp,
+      this.isMainnet
+    );
+
+    return this._postUIAction(
+      {
+        type: 'cancel',
+        cancels: cancelRequests.map((cancel) => ({
+          a: this.coinToAsset[cancel.coin],
+          o: cancel.oid,
         })),
       },
       signature,

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTimestampMs = exports.floatToInt = exports.floatToUsdInt = exports.floatToIntForHashing = exports.floatToWire = exports.Tl = exports.signUsdTransferAction = exports.signL1Action = exports.constructPhantomAgent = exports.orderSpecToOrderWire = exports.orderTypeToWire = exports.orderSpecPreprocessing = exports.orderGroupToNumber = exports.orderTypeToTuple = exports.ZERO_ADDRESS = void 0;
+exports.getTimestampMs = exports.floatToInt = exports.floatToUsdInt = exports.floatToIntForHashing = exports.floatToWire = exports.Tl = exports.signUsdTransferAction = exports.signL1Action = exports.constructPhantomAgent = exports.orderSpecToUIOrderWire = exports.orderSpecToOrderWire = exports.orderTypeToWire = exports.orderSpecPreprocessing = exports.orderGroupToNumber = exports.orderTypeToTuple = exports.ZERO_ADDRESS = void 0;
 const ethers_1 = require("ethers");
 exports.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 function orderTypeToTuple(orderType) {
@@ -98,6 +98,18 @@ function orderSpecToOrderWire(order_spec) {
     };
 }
 exports.orderSpecToOrderWire = orderSpecToOrderWire;
+function orderSpecToUIOrderWire(order_spec) {
+    const order = order_spec.order;
+    return {
+        a: order.asset,
+        b: order.isBuy,
+        p: floatToWire(order.limitPx),
+        s: floatToWire(order.sz),
+        r: order.reduceOnly,
+        t: orderTypeToWire(order_spec.orderType),
+    };
+}
+exports.orderSpecToUIOrderWire = orderSpecToUIOrderWire;
 function constructPhantomAgent(signatureTypes, signatureData, isMainnet) {
     const coder = new ethers_1.AbiCoder();
     const connectionId = coder.encode(signatureTypes, signatureData);

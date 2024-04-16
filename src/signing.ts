@@ -88,6 +88,16 @@ export interface OrderWire {
   cloid?: string;
 }
 
+export interface UIOrderWire {
+  a: number;
+  b: boolean;
+  p: string;
+  s: string;
+  r: boolean;
+  t: OrderTypeWire;
+  cloid?: string;
+}
+
 export function orderTypeToWire(orderType: OrderType): OrderTypeWire {
   if (orderType.limit) {
     return { limit: orderType.limit };
@@ -113,6 +123,18 @@ export function orderSpecToOrderWire(order_spec: OrderSpec): OrderWire {
     reduceOnly: order.reduceOnly,
     orderType: orderTypeToWire(order_spec.orderType),
     cloid: order.cloid,
+  };
+}
+
+export function orderSpecToUIOrderWire(order_spec: OrderSpec): UIOrderWire {
+  const order = order_spec.order;
+  return {
+    a: order.asset,
+    b: order.isBuy,
+    p: floatToWire(order.limitPx),
+    s: floatToWire(order.sz),
+    r: order.reduceOnly,
+    t: orderTypeToWire(order_spec.orderType),
   };
 }
 
