@@ -9,7 +9,7 @@ export declare class API {
     httpAgent: http.Agent;
     httpsAgent: https.Agent;
     constructor(baseUrl: string);
-    post<T>(urlPath: string, payload?: {}): Promise<T>;
+    post<T>(urlPath: string, payload?: {}, config?: {}): Promise<T>;
 }
 export declare class Info extends API {
     wsManager: WebsocketManager;

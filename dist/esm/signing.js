@@ -90,6 +90,17 @@ export function orderSpecToOrderWire(order_spec) {
         cloid: order.cloid,
     };
 }
+export function orderSpecToUIOrderWire(order_spec) {
+    const order = order_spec.order;
+    return {
+        a: order.asset,
+        b: order.isBuy,
+        p: floatToWire(order.limitPx),
+        s: floatToWire(order.sz),
+        r: order.reduceOnly,
+        t: orderTypeToWire(order_spec.orderType),
+    };
+}
 export function constructPhantomAgent(signatureTypes, signatureData, isMainnet) {
     const coder = new AbiCoder();
     const connectionId = coder.encode(signatureTypes, signatureData);

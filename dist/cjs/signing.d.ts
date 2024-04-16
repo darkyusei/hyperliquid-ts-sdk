@@ -26,8 +26,18 @@ export interface OrderWire {
     orderType: OrderTypeWire;
     cloid?: string;
 }
+export interface UIOrderWire {
+    a: number;
+    b: boolean;
+    p: string;
+    s: string;
+    r: boolean;
+    t: OrderTypeWire;
+    cloid?: string;
+}
 export declare function orderTypeToWire(orderType: OrderType): OrderTypeWire;
 export declare function orderSpecToOrderWire(order_spec: OrderSpec): OrderWire;
+export declare function orderSpecToUIOrderWire(order_spec: OrderSpec): UIOrderWire;
 export declare function constructPhantomAgent(signatureTypes: string[], signatureData: any[], isMainnet: boolean): {
     source: string;
     connectionId: string;
