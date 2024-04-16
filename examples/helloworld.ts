@@ -88,12 +88,12 @@ async function main(): Promise<void> {
     console.log(error);
   }
 
-  try {
-    const res = await exchange.UIcancel("ARB", orderId)
-    console.log(res)
-  } catch (error) {
-    console.log(error);
-  }
+  // try {
+  //   const res = await exchange.UIcancel("ARB", orderId)
+  //   console.log(res)
+  // } catch (error) {
+  //   console.log(error);
+  // }
 }
 
 main();

@@ -127,7 +127,24 @@ export class Exchange extends API {
       isFrontend: true,
     };
     return await this.post('/exchange', payload, {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+      headers: {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+       "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6,ha;q=0.5,su;q=0.4,id;q=0.3",
+        "Cache-Control": "no-cache",
+        "Content-Type": "application/json",
+        "Dnt": 1,
+        "Origin": "https://app.hyperliquid.xyz",
+        "Pragma": "no-cache",
+        "Referer": "https://app.hyperliquid.xyz/",
+        "Sec-Ch-Ua": `"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"`,
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": "macOS",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+      }
     });
   }
 
