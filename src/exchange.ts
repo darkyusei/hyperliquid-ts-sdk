@@ -130,7 +130,7 @@ export class Exchange extends API {
       headers: {
         "Accept": "*/*",
         "Accept-Encoding": "gzip, deflate, br, zstd",
-       "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6,ha;q=0.5,su;q=0.4,id;q=0.3",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6,ha;q=0.5,su;q=0.4,id;q=0.3",
         "Cache-Control": "no-cache",
         "Content-Type": "application/json",
         "Dnt": 1,
@@ -157,6 +157,17 @@ export class Exchange extends API {
   ): Promise<ApiResponse> {
     const px = await this.slippage_price(coin, isBuy, slippage);
     return await this.order(coin, isBuy, sz, px, {"limit": {"tif": "Ioc"}}, reduceOnly);
+  }
+
+  async UIMarketOrder(
+    coin: string,
+    isBuy: boolean,
+    sz: number,
+    reduceOnly = false,
+    slippage = DEFAULT_SLIPPAGE
+  ): Promise<ApiResponse> {
+    const px = await this.slippage_price(coin, isBuy, slippage);
+    return await this.UIorder(coin, isBuy, sz, px, {"limit": {"tif": "FrontendMarket"}}, reduceOnly);
   }
 
   private async slippage_price(

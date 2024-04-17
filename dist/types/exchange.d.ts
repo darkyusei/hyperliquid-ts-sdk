@@ -13,6 +13,7 @@ export declare class Exchange extends API {
     private _postAction;
     private _postUIAction;
     marketOrder(coin: string, isBuy: boolean, sz: number, reduceOnly?: boolean, slippage?: number): Promise<ApiResponse>;
+    UIMarketOrder(coin: string, isBuy: boolean, sz: number, reduceOnly?: boolean, slippage?: number): Promise<ApiResponse>;
     private slippage_price;
     order(coin: string, isBuy: boolean, sz: number, limitPx: number, orderType: OrderType, reduceOnly?: boolean, cloid?: string): Promise<ApiResponse>;
     UIorder(coin: string, isBuy: boolean, sz: number, limitPx: number, orderType: OrderType, reduceOnly?: boolean): Promise<ApiResponse>;

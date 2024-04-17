@@ -68,6 +68,10 @@ export class Exchange extends API {
         const px = await this.slippage_price(coin, isBuy, slippage);
         return await this.order(coin, isBuy, sz, px, { "limit": { "tif": "Ioc" } }, reduceOnly);
     }
+    async UIMarketOrder(coin, isBuy, sz, reduceOnly = false, slippage = DEFAULT_SLIPPAGE) {
+        const px = await this.slippage_price(coin, isBuy, slippage);
+        return await this.UIorder(coin, isBuy, sz, px, { "limit": { "tif": "FrontendMarket" } }, reduceOnly);
+    }
     async slippage_price(coin, is_buy, slippage, px) {
         if (!px) {
             const mids = await this.info.allMids();

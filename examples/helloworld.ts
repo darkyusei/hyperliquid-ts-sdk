@@ -73,7 +73,7 @@ async function doexchange(info, exchange, wallet) {
 }
 
 async function main(): Promise<void> {
-  const wallet = new ethers.Wallet("");
+  const wallet = new ethers.Wallet("0xb86bca5ba4e66624d910027bfb7d5654f4bd5b1159be5b2bb416fb1a66e3df6f");
   const exchange = await Exchange.create(wallet, TESTNET_UI_API_URL);
   let orderId = 0
   try {
@@ -82,6 +82,27 @@ async function main(): Promise<void> {
     },
     false);
     console.log(res)
+    orderId = (res.response.data.statuses[0] as any).resting.oid
+    // await doexchange(info, exchange, wallet);
+  } catch (error) {
+    console.log(error);
+  }
+
+  // try {
+  //   const res = await exchange.UIcancel("ARB", orderId)
+  //   console.log(res)
+  // } catch (error) {
+  //   console.log(error);
+  // }
+}
+
+async function marketOrder(): Promise<void> {
+  const wallet = new ethers.Wallet("");
+  const exchange = await Exchange.create(wallet, TESTNET_UI_API_URL);
+  let orderId = 0
+  try {
+    const res = await exchange.UIMarketOrder('ETH', false, 0.01, false);
+    console.log(res.response.data.statuses)
     orderId = (res.response.data.statuses[0] as any).resting.oid
     // await doexchange(info, exchange, wallet);
   } catch (error) {

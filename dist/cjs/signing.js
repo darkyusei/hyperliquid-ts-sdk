@@ -177,7 +177,8 @@ function floatToWire(x) {
     if (Math.abs(parseFloat(rounded) - x) >= 1e-12) {
         throw new Error('float_to_wire causes rounding');
     }
-    return rounded;
+    // 去除多余的0
+    return Number(rounded).toString();
 }
 exports.floatToWire = floatToWire;
 function floatToIntForHashing(x) {
