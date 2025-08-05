@@ -60,11 +60,11 @@ export class WebsocketManager {
     this.socket.on('error', (error) => {
       console.error('WebSocket error:', error);
       // this.socket.close()
-    })
+    });
 
     this.socket.on('open', (): void => {
-      this.alive = true
-      this.heartbeat()
+      this.alive = true;
+      this.heartbeat();
       if (this.debug) {
         console.log('on_open');
       }
@@ -98,7 +98,7 @@ export class WebsocketManager {
       }
 
       if (identifier === 'pong') {
-        this.alive = true
+        this.alive = true;
       }
 
       const active_subscriptions = this.activeSubscriptions[identifier];
@@ -122,8 +122,8 @@ export class WebsocketManager {
 
   heartbeat() {
     setInterval(()=> {
-      this.socket.send(JSON.stringify({ method: 'ping' }))
-    }, 30000)
+      this.socket.send(JSON.stringify({ method: 'ping' }));
+    }, 30000);
   }
 
   subscribe(
@@ -204,7 +204,7 @@ export class WebsocketManager {
     } else if (wsMsg['channel'] === 'subscriptionResponse') {
       return 'subscriptionResponse';
     } else if (wsMsg['channel'] === 'pong') {
-      return 'pong'
+      return 'pong';
     }
     return wsMsg['channel'];
   }

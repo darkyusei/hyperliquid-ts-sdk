@@ -73,7 +73,7 @@ async function doexchange(info, exchange, wallet) {
 }
 
 async function main(): Promise<void> {
-  const wallet = new ethers.Wallet("0xb86bca5ba4e66624d910027bfb7d5654f4bd5b1159be5b2bb416fb1a66e3df6f");
+  const wallet = new ethers.Wallet("0xa157dad9465bc6e1917dade723da876b26ae46b05877ab80b6e9fa431f887a53");
   const exchange = await Exchange.create(wallet, TESTNET_UI_API_URL);
   let orderId = 0
   try {
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
 }
 
 async function marketOrder(): Promise<void> {
-  const wallet = new ethers.Wallet("");
+  const wallet = new ethers.Wallet("0x585e4c6e7b5f6d1493cb42a0c2459da7a4892bbd095219ffc37f51df9b83f7da");
   const exchange = await Exchange.create(wallet, TESTNET_UI_API_URL);
   let orderId = 0
   try {

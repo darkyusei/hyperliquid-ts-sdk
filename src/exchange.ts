@@ -93,6 +93,7 @@ export class Exchange extends API {
       signature,
       vaultAddress: this.vaultAddress,
     };
+    console.log(JSON.stringify(payload, null, 4));
     return await this.post('/exchange', payload);
   }
 
@@ -126,6 +127,7 @@ export class Exchange extends API {
       vaultAddress: this.vaultAddress,
       isFrontend: true,
     };
+    console.log(JSON.stringify(payload, null, 4));
     return await this.post('/exchange', payload, {
       headers: {
         "Accept": "*/*",
@@ -177,7 +179,7 @@ export class Exchange extends API {
     px?: number
 ): Promise<number> {
     if (!px) {
-        const mids = await this.info.allMids()
+        const mids = await this.info.allMids();
         // Get midprice
         px = parseFloat(mids[coin]);
     }
@@ -244,7 +246,7 @@ export class Exchange extends API {
 
     const timestamp = getTimestampMs();
     const grouping = 'na';
-    const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint64,bytes16)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]'
+    const typeArr = orderRequests[0].cloid ? '(uint32,bool,uint64,uint64,bool,uint8,uint64,bytes16)[]' : '(uint32,bool,uint64,uint64,bool,uint8,uint64)[]';
     const signature = await signL1Action(
       this.wallet,
       [typeArr, 'uint8'],
@@ -294,7 +296,6 @@ export class Exchange extends API {
       timestamp,
       this.isMainnet
     );
-
     return await this._postUIAction(
       {
         type: 'order',
